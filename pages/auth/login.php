@@ -2,22 +2,46 @@
 session_start();
 require_once '../../config/database.php';
 
-if (isset($_POST['login'])) {
-    $npm      = mysqli_real_escape_string($conn, $_POST['npm']);
-    $password = md5($_POST['password']);
+$error = null;
 
+if (isset($_POST['login'])) {
+
+    // 1 input untuk petugas & mahasiswa
+    $identifier = mysqli_real_escape_string($conn, $_POST['identifier']);
+    $password   = md5($_POST['password']);
+
+    // ===============================
+    // CEK LOGIN PETUGAS
+    // ===============================
     $query = mysqli_query($conn, "
-        SELECT * FROM users 
-        WHERE npm='$npm' 
-        AND password='$password' 
-        AND status='aktif'
+        SELECT * FROM users
+        WHERE username_petugas = '$identifier'
+        AND password = '$password'
+        AND role = 'petugas'
+        AND status = 'aktif'
+        LIMIT 1
     ");
 
-    if (mysqli_num_rows($query) === 1) {
+    // ===============================
+    // JIKA BUKAN PETUGAS → CEK MAHASISWA
+    // ===============================
+    if (mysqli_num_rows($query) === 0) {
+        $query = mysqli_query($conn, "
+            SELECT * FROM users
+            WHERE npm = '$identifier'
+            AND password = '$password'
+            AND role = 'mahasiswa'
+            AND status = 'aktif'
+            LIMIT 1
+        ");
+    }
+
+    if ($query && mysqli_num_rows($query) === 1) {
+
         $user = mysqli_fetch_assoc($query);
 
         $_SESSION['login'] = true;
-        $_SESSION['id']    = $user['id'];
+        $_SESSION['user_id']    = $user['id'];
         $_SESSION['nama']  = $user['nama'];
         $_SESSION['role']  = $user['role'];
 
@@ -27,8 +51,9 @@ if (isset($_POST['login'])) {
             header("Location: ../mahasiswa/dashboard.php");
         }
         exit;
+
     } else {
-        $error = "NPM atau password salah!";
+        $error = "ID / NPM atau password salah!";
     }
 }
 ?>
@@ -58,7 +83,7 @@ if (isset($_POST['login'])) {
             border-radius: 12px;
         }
         .btn-ukri {
-            background-color: #FFC107;
+            background-color: #ff0707ff;
             color: #212121;
             font-weight: 600;
         }
@@ -89,21 +114,28 @@ if (isset($_POST['login'])) {
                 Universitas Kebangsaan Republik Indonesia
             </p>
 
-            <?php if (isset($error)): ?>
+            <?php if ($error): ?>
                 <div class="alert alert-danger text-center">
                     <i class="bi bi-exclamation-triangle"></i>
                     <?= $error ?>
                 </div>
             <?php endif; ?>
 
+            <!-- ===== SATU FORM LOGIN ===== -->
             <form method="post">
                 <div class="mb-3">
-                    <label class="form-label">NPM / Username</label>
+                    <label class="form-label">NPM / ID Petugas</label>
                     <div class="input-group">
                         <span class="input-group-text">
                             <i class="bi bi-person"></i>
                         </span>
-                        <input type="text" name="npm" class="form-control" placeholder="Masukkan NPM" required>
+                        <input
+                            type="text"
+                            name="identifier"
+                            class="form-control"
+                            placeholder="Masukan NPM atau ID Petugas"
+                            required
+                        >
                     </div>
                 </div>
 
@@ -113,7 +145,13 @@ if (isset($_POST['login'])) {
                         <span class="input-group-text">
                             <i class="bi bi-lock"></i>
                         </span>
-                        <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
+                        <input
+                            type="password"
+                            name="password"
+                            class="form-control"
+                            placeholder="Masukkan password"
+                            required
+                        >
                     </div>
                 </div>
 

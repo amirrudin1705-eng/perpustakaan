@@ -1,129 +1,160 @@
 <?php
 require_once '../../includes/auth_check.php';
+require_once '../../config/database.php';
 cekRole('petugas');
+
+/* =========================
+   STATISTIK DASHBOARD
+   ========================= */
+$totalBuku = mysqli_fetch_assoc(
+    mysqli_query($conn, "SELECT COUNT(*) total FROM buku")
+)['total'];
+
+$totalMahasiswa = mysqli_fetch_assoc(
+    mysqli_query($conn, "SELECT COUNT(*) total FROM users WHERE role='mahasiswa'")
+)['total'];
+
+$peminjamanAktif = mysqli_fetch_assoc(
+    mysqli_query($conn, "SELECT COUNT(*) total FROM peminjaman WHERE status='dipinjam'")
+)['total'];
+
+$peminjamanMenunggu = mysqli_fetch_assoc(
+    mysqli_query($conn, "SELECT COUNT(*) total FROM peminjaman WHERE status='menunggu'")
+)['total'];
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard Petugas | Perpustakaan UKRI</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Dashboard Petugas | Perpustakaan UKRI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background:#f8f9fa;
+}
 
-    <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+/* SIDEBAR */
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: #ffffff;
+}
+.sidebar a {
+    padding: 12px 16px;
+    display: block;
+    text-decoration: none;
+    color: #212529;
+    border-radius: 8px;
+}
+.sidebar a:hover,
+.sidebar .active {
+    background: #8B0000;
+    color: #fff;
+}
 
-    <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: #F8F9FA;
-        }
-        .navbar {
-            background-color: #FFC107;
-        }
-        .navbar-brand, .nav-link {
-            color: #212121 !important;
-            font-weight: 600;
-        }
-        .card {
-            border-radius: 12px;
-        }
-        .icon-box {
-            font-size: 2.2rem;
-            color: #4CAF50;
-        }
-    </style>
+/* HERO / LANDING */
+.hero {
+    background-image: url('../../assets/img/foto-ukri1.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 300px;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+
+    /* efek timbul */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+.hero::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: rgba(58, 58, 58, 0.65); /* overlay merah hati */
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+
+/* CARD */
+.stat-card {
+    border-radius: 14px;
+}
+.stat-card h3 {
+    color: #8B0000;
+    font-weight: 700;
+}
+</style>
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg shadow-sm">
-    <div class="container">
-        <a class="navbar-brand" href="#">
-            <i class="bi bi-book-half"></i> Perpustakaan UKRI
-        </a>
+<div class="d-flex">
 
-        <div class="ms-auto">
-            <span class="me-3">
-                <i class="bi bi-person-badge"></i>
-                <?= $_SESSION['nama']; ?> (Petugas)
-            </span>
-            <a href="../auth/logout.php" class="btn btn-sm btn-outline-dark">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
-        </div>
+    <!-- SIDEBAR PETUGAS -->
+    <?php include 'layout/sidebar_petugas.php'; ?>
+    <!-- CONTENT -->
+    <div class="flex-grow-1 p-4">
+
+        <!-- HERO / LANDING -->
+       <div class="hero mb-4 text-white d-flex align-items-center">
+    <div class="hero-content px-4">
+        <h4>Selamat Datang, <?= $_SESSION['nama']; ?> 👋</h4>
+        <p class="mb-0">
+            Dashboard Petugas Perpustakaan UKRI
+        </p>
     </div>
-</nav>
+</div>
 
-<!-- CONTENT -->
-<div class="container my-5">
+        <!-- STATISTIK -->
+        <div class="row g-4">
 
-    <h4 class="mb-4">
-        <i class="bi bi-speedometer2 text-success"></i>
-        Dashboard Petugas
-    </h4>
-
-    <div class="row g-4">
-
-        <!-- Kelola Buku -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <div class="icon-box mb-2">
-                        <i class="bi bi-book"></i>
+            <div class="col-md-3">
+                <div class="card stat-card shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="text-muted">Total Buku</h6>
+                        <h3><?= $totalBuku; ?></h3>
                     </div>
-                    <h5>Kelola Buku</h5>
-                    <p class="text-muted small">
-                        Tambah, ubah, dan hapus data buku
-                    </p>
-                    <a href="buku.php" class="btn btn-success btn-sm">
-                        Kelola Buku
-                    </a>
                 </div>
             </div>
-        </div>
 
-        <!-- Peminjaman -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <div class="icon-box mb-2">
-                        <i class="bi bi-arrow-left-right"></i>
+            <div class="col-md-3">
+                <div class="card stat-card shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="text-muted">Mahasiswa</h6>
+                        <h3><?= $totalMahasiswa; ?></h3>
                     </div>
-                    <h5>Peminjaman</h5>
-                    <p class="text-muted small">
-                        Proses peminjaman & pengembalian buku
-                    </p>
-                    <a href="peminjaman.php" class="btn btn-success btn-sm">
-                        Peminjaman
-                    </a>
                 </div>
             </div>
-        </div>
 
-        <!-- Laporan -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <div class="icon-box mb-2">
-                        <i class="bi bi-file-earmark-text"></i>
+            <div class="col-md-3">
+                <div class="card stat-card shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="text-muted">Dipinjam</h6>
+                        <h3><?= $peminjamanAktif; ?></h3>
                     </div>
-                    <h5>Laporan</h5>
-                    <p class="text-muted small">
-                        Laporan transaksi perpustakaan
-                    </p>
-                    <a href="laporan.php" class="btn btn-success btn-sm">
-                        Lihat Laporan
-                    </a>
                 </div>
             </div>
+
+            <div class="col-md-3">
+                <div class="card stat-card shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="text-muted">Menunggu</h6>
+                        <h3><?= $peminjamanMenunggu; ?></h3>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div>
