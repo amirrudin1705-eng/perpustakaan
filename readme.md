@@ -27,5 +27,3 @@ Project ini dibuat untuk keperluan **tugas/UAS** dan pembelajaran pengembangan w
 - **DOMPDF** (untuk export PDF)
 
 ---
-
-## 📂 Struktur Folder
